@@ -1,0 +1,249 @@
+Index: RSUTT.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/RSUTT.py b/RSUTT.py
+--- a/RSUTT.py	
++++ b/RSUTT.py	(date 1697166543942)
+@@ -261,9 +261,9 @@
+ # Only when you want to change Classsifier
+ setting()
+ 
+-disc_inputs = set()
+-disc_inputs_list = []
+-tot_inputs = set()
++tot_input_set = set()
++seed_input_set = set()
++disc_input_set = set()
+ global_iteration_limit = N
+ local_iteration_limit = N
+ model = joblib.load(classifier_name)
+@@ -292,27 +292,28 @@
+ 
+     out0 = model.predict(inp0)
+     out1 = model.predict(inp1)
+-    tot_inputs.add(tuple(map(tuple, inp0)))
++    tot_input_set.add(tuple(inp0.tolist()[0]))
+ 
+-    if abs(out0 - out1) > threshold and tuple(map(tuple, inp0)) in disc_inputs:
+-        global duplication_data
+-        duplication_data += 1
+-    if abs(out0 - out1) > threshold and (tuple(map(tuple, inp0)) not in disc_inputs and tuple(map(tuple, inp0)) not in disc_inputs):
+-        if random.randint(0, 1) == 0:
+-            disc_inputs.add(tuple(map(tuple, inp0)))
+-            disc_inputs_list.append(inp0.tolist()[0])
+-        else:
+-            disc_inputs.add(tuple(map(tuple, inp1)))
+-            disc_inputs_list.append(inp1.tolist()[0])
++    if abs(out0 - out1) > threshold:
++        if tuple(inp0.tolist()[0]) not in disc_input_set and tuple(inp1.tolist()[0]) not in disc_input_set:
++            if random.randint(0, 1) == 0:
++                disc_input_set.add(tuple(inp0.tolist()[0]))
++                # disc_inputs_list.append(inp0.tolist()[0])
++            else:
++                disc_input_set.add(tuple(inp1.tolist()[0]))
++                # disc_inputs_list.append(inp1.tolist()[0])
++        else:
++            global duplication_data
++            duplication_data += 1
+ 
+-    return abs(out0 - out1)
++    return [out0.tolist(), out1.tolist()]
+ 
+ 
+ # Aequitas algorithm
+ 
+ if algorithm == "AEQUITAS":
+     duplication_data = 0
+-    
++
+     init_prob = 0.5
+     direction_probability = [init_prob] * params
+     direction_probability_change_size = 0.001
+@@ -398,19 +399,21 @@
+     basinhopping(evaluate_disc, initial_input, stepsize=1.0, take_step=global_discovery, minimizer_kwargs=minimizer,
+                  niter=global_iteration_limit)
+ 
+-    seed_data = len(disc_inputs_list)
++    seed_input_set = copy.copy(disc_input_set)
++    seed_data = len(seed_input_set)
+     global_duplication_data = duplication_data
++    duplication_data = 0
+ 
+     local_iteration_limit = (local_iteration_limit * seed_data) // 200
+ 
+-    copy_list = copy.copy(disc_inputs_list)
++    copy_list = copy.copy(disc_input_set)
+     for inp in copy_list:
+-        basinhopping(evaluate_disc, inp, stepsize=1.0, take_step=local_perturbation, minimizer_kwargs=minimizer,
++        basinhopping(evaluate_disc, list(inp), stepsize=1.0, take_step=local_perturbation, minimizer_kwargs=minimizer,
+                      niter=local_iteration_limit)
+ 
+     local_duplication_data = duplication_data
+-    total_data = len(tot_inputs)
+-    disc_data = len(disc_inputs_list)
++    total_data = len(tot_input_set)
++    disc_data = len(disc_input_set)
+     elapsed_time = time.time() - starting_time
+ 
+ # KOSEI algorithm
+@@ -444,7 +447,7 @@
+                     continue
+                 elif inp2[param] > input_bounds[param][1] and direction == 1:
+                     continue
+-                elif tuple(map(tuple, np.reshape(np.asarray(inp2), (1, -1)))) in tot_inputs:
++                elif tuple(map(tuple, np.reshape(np.asarray(inp2), (1, -1)))) in tot_input_set:
+                     global duplication_data
+                     duplication_data += 1
+                     continue
+@@ -462,7 +465,7 @@
+                     continue
+                 elif inp2[param] > input_bounds[param][1] and direction == 1:
+                     continue
+-                elif tuple(map(tuple, np.reshape(np.asarray(inp2), (1, -1)))) in tot_inputs:
++                elif tuple(map(tuple, np.reshape(np.asarray(inp2), (1, -1)))) in tot_input_set:
+                     global duplication_data
+                     duplication_data += 1
+                     continue
+@@ -480,7 +483,7 @@
+                     continue
+                 elif inp2[param] > input_bounds[param][1] and direction == 1:
+                     continue
+-                elif tuple(map(tuple, np.reshape(np.asarray(inp2), (1, -1)))) in tot_inputs:
++                elif tuple(map(tuple, np.reshape(np.asarray(inp2), (1, -1)))) in tot_input_set:
+                     global duplication_data
+                     duplication_data += 1
+                     continue
+@@ -504,25 +507,31 @@
+     basinhopping(evaluate_disc, initial_input, stepsize=1.0, take_step=global_discovery, minimizer_kwargs=minimizer,
+                  niter=global_iteration_limit)
+ 
+-    seed_data = len(disc_inputs_list)
++    seed_input_set = copy.copy(disc_input_set)
++    seed_data = len(seed_input_set)
+     global_duplication_data = duplication_data
++    duplication_data = 0
+ 
+     local_iteration_limit *= seed_data
+ 
+-    for inp in disc_inputs_list:
+-        if local_cnt < local_iteration_limit:
+-            if dataset == "CENSUS":
+-                my_local_search_census(inp)
+-            elif dataset == "GERMAN":
+-                my_local_search_german(inp)
+-            elif dataset == "BANK":
+-                my_local_search_bank(inp)
+-        else:
+-            break
++    flg = True
++    while flg:
++        local_input_set = copy.copy(disc_input_set)
++        for inp in disc_input_set:
++            if local_cnt < local_iteration_limit:
++                if dataset == "CENSUS":
++                    my_local_search_census(list(inp))
++                elif dataset == "GERMAN":
++                    my_local_search_german(list(inp))
++                elif dataset == "BANK":
++                    my_local_search_bank(list(inp))
++            else:
++                flg = False
++                break
+ 
+     local_duplication_data = duplication_data
+-    total_data = len(tot_inputs)
+-    disc_data = len(disc_inputs_list)
++    total_data = len(tot_input_set)
++    disc_data = len(disc_input_set)
+     elapsed_time = time.time() - starting_time
+ 
+ # CGFT algorithm
+@@ -672,24 +681,27 @@
+ 
+     local_perturbation = LocalPerturbation()
+ 
+-    test_ct_file = select_from_ctfile(global_iteration_limit)
++    seed_input_set = set(tuple(data) for data in select_from_ctfile(global_iteration_limit))
+ 
+-    for inp in test_ct_file:
+-        evaluate_disc(inp)
++    for inp in seed_input_set:
++        evaluate_disc(list(inp))
+ 
+-    seed_data = len(disc_inputs_list)
++    seed_data = len(disc_input_set)
+     global_duplication_data = duplication_data
++    duplication_data = 0
+ 
+     local_iteration_limit = (local_iteration_limit * seed_data) // 200
+ 
+-    copy_list = copy.copy(disc_inputs_list)
++    local_perturbation = LocalPerturbation()
++
++    copy_list = copy.copy(disc_input_set)
+     for inp in copy_list:
+-        basinhopping(evaluate_disc, inp, stepsize=1.0, take_step=local_perturbation, minimizer_kwargs=minimizer,
++        basinhopping(evaluate_disc, list(inp), stepsize=1.0, take_step=local_perturbation, minimizer_kwargs=minimizer,
+                      niter=local_iteration_limit)
+ 
+     local_duplication_data = duplication_data
+-    total_data = len(tot_inputs)
+-    disc_data = len(disc_inputs_list)
++    total_data = len(tot_input_set)
++    disc_data = len(disc_input_set)
+     elapsed_time = time.time() - starting_time
+ 
+ # RSUTT algorithm
+@@ -711,7 +723,7 @@
+                         continue
+                     elif inp2[param] > input_bounds[param][1] and direction == 1:
+                         continue
+-                    elif tuple(map(tuple, np.reshape(np.asarray(inp2), (1, -1)))) in tot_inputs:
++                    elif tuple(map(tuple, np.reshape(np.asarray(inp2), (1, -1)))) in tot_input_set:
+                         global duplication_data
+                         duplication_data += 1
+                         continue
+@@ -801,25 +813,30 @@
+ 
+ 
+     starting_time = time.time()
+-    test_ct_file = select_from_ctfile(global_iteration_limit)
++    seed_input_set = set(tuple(data) for data in select_from_ctfile(global_iteration_limit))
+ 
+-    for inp in test_ct_file:
+-        evaluate_disc(inp)
++    for inp in seed_input_set:
++        evaluate_disc(list(inp))
+ 
+-    seed_data = len(disc_inputs_list)
++    seed_data = len(disc_input_set)
+     global_duplication_data = duplication_data
++    duplication_data = 0
+ 
+     local_iteration_limit *= seed_data
+ 
+-    for inp in disc_inputs_list:
+-        if local_cnt < local_iteration_limit:
+-            my_local_search(inp)
+-        else:
+-            break
++    flg = True
++    while flg:
++        local_input_set = copy.copy(disc_input_set)
++        for inp in local_input_set:
++            if local_cnt < local_iteration_limit:
++                my_local_search(list(inp))
++            else:
++                flg = False
++                break
+ 
+     local_duplication_data = duplication_data
+-    total_data = len(tot_inputs)
+-    disc_data = len(disc_inputs_list)
++    total_data = len(tot_input_set)
++    disc_data = len(disc_input_set)
+     elapsed_time = time.time() - starting_time
+ 
+ else:
