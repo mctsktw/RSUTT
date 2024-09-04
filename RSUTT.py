@@ -9,13 +9,12 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.linear_model import SGDClassifier
 from scipy.optimize import basinhopping
 from config import config_census
 from config import config_german
 from config import config_bank
 import copy
-from CT import generateCTFiles
+from CT import generateCT
 from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 
@@ -34,74 +33,6 @@ X = None
 Y = None
 
 
-def dt():
-    global X, Y
-    m = DecisionTreeClassifier(class_weight=None, criterion='gini', max_depth=None,
-                               max_features=None, max_leaf_nodes=None,
-                               min_impurity_decrease=0.0, min_impurity_split=None,
-                               min_samples_leaf=1, min_samples_split=2,
-                               min_weight_fraction_leaf=0.0,
-                               random_state=None, splitter='best')
-
-    # Fitting the model with the dataset
-    m2 = m.fit(X, Y)
-
-    pd.to_pickle(m2, 'classifier/' + dataset.lower() + '/DT_' + dataset.upper() + '.pkl')
-
-    return
-
-
-def mlp():
-    global X, Y
-    m = MLPClassifier(hidden_layer_sizes=(100,), activation='relu', solver='adam',
-                      alpha=0.0001, batch_size='auto', learning_rate='constant',
-                      learning_rate_init=0.001, power_t=0.5, max_iter=200,
-                      shuffle=True, random_state=None, tol=0.0001,
-                      verbose=False, warm_start=False, momentum=0.9,
-                      nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1,
-                      beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-
-    # Fitting the model with the dataset
-    m2 = m.fit(X, Y)
-
-    pd.to_pickle(m2, 'classifier/' + dataset.lower() + '/MLP_' + dataset.upper() + '.pkl')
-
-    return
-
-
-def rf():
-    global X, Y
-    m = RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
-                               max_depth=5, max_features='auto', max_leaf_nodes=None,
-                               min_impurity_decrease=0.0, min_impurity_split=None,
-                               min_samples_leaf=1, min_samples_split=2,
-                               min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
-                               oob_score=False, random_state=None, verbose=0,
-                               warm_start=False)
-
-    # Fitting the model with the dataset
-    m2 = m.fit(X, Y)
-
-    pd.to_pickle(m2, 'classifier/' + dataset.lower() + '/RF_' + dataset.upper() + '.pkl')
-
-    return
-
-
-def sgd():
-    global X, Y
-    m = SGDClassifier(loss='hinge', penalty='l2', alpha=0.0001, l1_ratio=0.15, fit_intercept=True, max_iter=1000,
-                      tol=0.0001, shuffle=True, verbose=0, epsilon=0.1, n_jobs=1, random_state=None,
-                      learning_rate='constant', eta0=0.001, power_t=0.5, class_weight=None, warm_start=False,
-                      average=False)
-
-    # Fitting the model with the dataset
-    m2 = m.fit(X, Y)
-
-    pd.to_pickle(m2, 'classifier/' + dataset.lower() + '/SGD_' + dataset.upper() + '.pkl')
-
-    return
-
-
 params = 0
 sensitive_param = 0
 perturbation_unit = 0
@@ -117,18 +48,13 @@ sensitive_list = []
 def setting():
     global X, Y, params, sensitive_param, perturbation_unit, threshold, input_bounds, classifier_name, sensitive_list
 
-    # df = None
-    # if dataset == "CENSUS":
-    #     df = pd.read_csv('classifier/datasets/census.csv')
+    # csv_setting_path = 'classifier/datasets/' + dataset.lower() + '_retraining.csv'
 
-    # elif dataset == "GERMAN":
-    #     df = pd.read_csv('classifier/datasets/german.csv')
+    # if not os.path.isfile(csv_setting_path):
+    #     print "The path name is wrong."
+    #     sys.exit()
 
-    # elif dataset == "BANK":
-    #     df = pd.read_csv('classifier/datasets/bank.csv')
-
-    # else:
-    #     print "The dataset name is wrong."
+    # df = pd.read_csv(csv_setting_path)
 
     # data = df.values
 
@@ -216,7 +142,7 @@ def evaluate_disc(ed_input):
 
 if algorithm == "AEQUITAS":
     duplication_data = 0
-    
+
     init_prob = 0.5
     direction_probability = [init_prob] * params
     direction_probability_change_size = 0.001
@@ -508,7 +434,7 @@ elif algorithm == "CGFT":
         if os.path.exists("CT/" + dataset.lower() + "/" + dataset.lower() + "TS" + strength + "w.csv"):
             pass
         else:
-            generateCTFiles.generateCT(dataset, t)
+            generateCT.generateCT(dataset, t)
 
         tsaux = extract_testcases("CT/" + dataset.lower() + "/" + dataset.lower() + "TS" + strength + "w.csv")
         tslen = len(tsaux)
@@ -641,7 +567,7 @@ elif algorithm == "RSUTT":
         if os.path.exists("CT/" + dataset.lower() + "/" + dataset.lower() + "TS" + strength + "w.csv"):
             pass
         else:
-            generateCTFiles.generateCT(dataset, t)
+            generateCT.generateCT(dataset, t)
 
         tsaux = extract_testcases("CT/" + dataset.lower() + "/" + dataset.lower() + "TS" + strength + "w.csv")
         tslen = len(tsaux)

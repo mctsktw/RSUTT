@@ -4,7 +4,6 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.linear_model import SGDClassifier
 
 dataset = sys.argv[1]
 num = int(sys.argv[2])
@@ -56,7 +55,7 @@ def dt():
     return m2
 
 
-def mlpc():
+def mlp():
     global X, Y
     m = MLPClassifier(hidden_layer_sizes=(100,), activation='relu', solver='adam',
                       alpha=0.0001, batch_size='auto', learning_rate='constant',
@@ -113,37 +112,10 @@ def rf():
     return m2
 
 
-def sgdc():
-    global X, Y
-    m = SGDClassifier(loss='hinge', penalty='l2', alpha=0.0001, l1_ratio=0.15, fit_intercept=True, max_iter=1000,
-                      tol=0.0001, shuffle=True, verbose=0, epsilon=0.1, n_jobs=1, random_state=None,
-                      learning_rate='constant', eta0=0.001, power_t=0.5, class_weight=None, warm_start=False,
-                      average=False)
-
-    # Fitting the model with the dataset
-    m2 = m.fit(X, Y)
-
-    if dataset == "CENSUS":
-        pd.to_pickle(m2, 'census/SGD_CENSUS.pkl')
-
-    elif dataset == "GERMAN":
-        pd.to_pickle(m2, 'german/SGD_GERMAN.pkl')
-
-    elif dataset == "BANK":
-        pd.to_pickle(m2, 'bank/SGD_BANK.pkl')
-
-    else:
-        print "The dataset name is wrong."
-        sys.exit()
-
-    return m2
-
-
 if num == 1:
     dt()
-    mlpc()
+    mlp()
     rf()
-    sgdc()
 
     print "create classifier"
 

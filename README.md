@@ -1,5 +1,9 @@
 # RSUTT
 
+# Paper Information
+
+Code to the paper "RSUTT: Robust Search Using T-way Testing" by Chisato Matsukawa, Shingo Takada in QUATIC 2024.
+
 # Execution Environment
 
 programming language
@@ -15,11 +19,15 @@ expansion module
 
 The authors used Pycharm CE 2022.2.3 as the development IDE.
 
+# Links of backend tools
+
+* ACTS : https://csrc.nist.gov/projects/automated-combinatorial-testing-for-software/downloadable-tools
+
 # Scikit-Learn Classifiers
 
-* Decision Tree(DT)
-* MLPC
-* Random Forest(RF)
+* Decision Tree (DT)
+* Multi-Layer Perceptron (MLP)
+* Random Forest (RF)
 
 Each of the following three directories contains the following
 
@@ -43,13 +51,27 @@ The config files has the following data (same as the Udeshi's codes) :
 * sensitive_param : The parameter under test
 * input_bounds : The bounds of each parameter
 * classifier_name : Pickled scikit-learn classifier under test (only applicable to the sklearn files)
-* threshold : Discrimination threshold
-* perturbation_unit : By what unit would the user like to perturb the input in the local search
-* retraining_inputs : Inputs to be used for the retraining
 
 # Demo
 
-`python RSUTT.py <algorithm> <classifier> <dataset> <ace> <N>`
+First, you can manually create an empty directory.
+
+<pre>
+result
+├ AEQUITAS
+├ CGFT
+├ KOSEI
+└ RSUTT
+  ├ A
+  ├ B
+  └ C
+</pre>
+
+Running reset.py creates a directory, but be careful where you run it.
+
+## RQ1~RQ3
+
+`python RSUTT.py <algorithm> <dataset> <classifier> <ace> <test_case>`
 
 first parameter : algorithm
 
@@ -57,19 +79,18 @@ first parameter : algorithm
 * KOSEI 
 * CGFT 
 * RSUTT
-
-second parameter : classifier
-
-* DT 
-* MLPC 
-* RF
-* SGDC
-
-third parameter : dataset
+ 
+second parameter : dataset
 
 * CENSUS
 * GERMAN
 * BANK
+
+third parameter : classifier
+
+* DT 
+* MLP
+* RF
 
 fourth parameter : ace
 
@@ -77,15 +98,45 @@ fourth parameter : ace
 * MIDDLE
 * BEST
 
-fifth parameter : N
+fifth parameter : test_case
 
-N is global_iteration_limit.
+test_case is global_iteration_limit.
+
+## RQ4
+
+`python RSUTTABC.py <experiment> <dataset> <classifier> <test_case>`
+
+first parameter : experiment
+
+* A
+* B
+* C
+
+second parameter : dataset
+
+* CENSUS
+* GERMAN
+* BANK
+
+third parameter : classifier
+
+* DT 
+* MLP
+* RF
+
+fourth parameter : test_case
+
+test_case is global_iteration_limit.
 
 
 # iteration
 
 We set the default iteration limits in the following:
 
-global_iteration_limit = N
+global_iteration_limit = test_case
 
-local_iteration_limit = N * seed data (However, Aequitas and CGFT are further divided by 200.)
+local_iteration_limit = test_case * seed data (However, Aequitas and CGFT are further divided by 200.)
+
+# Notes
+
+As of August 1 2024, RSUTT is still being updated, so the experimental results may differ from those in the paper.
